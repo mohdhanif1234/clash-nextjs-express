@@ -24,7 +24,7 @@ app.get('/', async (req: Request, res: Response) => {
     const html = await ejs.renderFile(`${__dirname}/views/emails/welcome.ejs`, { name: "Mohammad Hanif" })
     // await sendEmail('sufiyan.siddiqui@nw18.com', 'Testing SMTP', html)
     await emailQueue.add(emailQueueName, {
-        to: 'sufiyan.siddiqui@nw18.com',
+        to: 'abc@gmail.com',
         subject: 'Testing SMTP',
         body: html
     })
