@@ -3,6 +3,7 @@ import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 import ejs from "ejs";
+import Routes from "./routes/index.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -13,11 +14,13 @@ app.use(express.urlencoded({
 // Set view engine
 app.set("view engine", "ejs");
 app.set("views", path.resolve(__dirname, "./views"));
+// Routes
+app.use(Routes);
 app.get('/', async (req, res) => {
     const html = await ejs.renderFile(`${__dirname}/views/emails/welcome.ejs`, { name: "Mohammad Hanif" });
     // await sendEmail('sufiyan.siddiqui@nw18.com', 'Testing SMTP', html)
     await emailQueue.add(emailQueueName, {
-        to: 'sufiyan.siddiqui@nw18.com',
+        to: 'hanif.topia@gmail.com',
         subject: 'Testing SMTP',
         body: html
     });
