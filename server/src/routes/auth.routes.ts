@@ -1,9 +1,11 @@
 import { Request, Response, Router } from "express"
 import { registerSchema } from "../validations/auth.validation.js"
 import { ZodError } from "zod"
-import { formatError } from "../helper.js"
+import { formatError, renderEmailEjs } from "../helper.js"
 import prisma from "../config/database.js"
 import bcrypt from "bcrypt"
+import { v4 as uuid4 } from "uuid"
+import { emailQueue, emailQueueName } from "../jobs/EmailJob.js"
 
 const router = Router()
 
@@ -31,15 +33,28 @@ router.post('/register', async (req: Request, res: Response) => {
         const salt = await bcrypt.genSalt(10);
         payload.password = await bcrypt.hash(payload.password, salt);
 
+        const token = await bcrypt.hash(uuid4(), salt);
+        const url = `${process.env.APP_URL}/verify-email?email=${payload.email}&token=${token}`;
+        const emailBody = await renderEmailEjs('email-verify', { name: payload.name, url: url });
+
+        // Send email
+        await emailQueue.add(emailQueueName, {
+            to: payload.email,
+            subject: 'Clash email verification',
+            body: emailBody
+        })
+
+
         await prisma.user.create({
             data: {
                 name: payload.name,
                 email: payload.email,
-                password: payload.password
+                password: payload.password,
+                email_verify_token: token
             }
         })
 
-        return res.json({ message: 'Account created successfully.' });
+        return res.json({ message: 'Please check your email. We have sent you a verfication email.' });
     } catch (error) {
         if (error instanceof ZodError) {
             const errors = formatError(error)
