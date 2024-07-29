@@ -3,7 +3,6 @@ import ejs from "ejs";
 import { fileURLToPath } from "url"
 import path from "path"
 
-
 export const formatError = (error: ZodError): any => {
     let errors: any = {}
     error.errors?.map(issue => {

@@ -49,6 +49,7 @@ router.post('/register', async (req, res) => {
     catch (error) {
         if (error instanceof ZodError) {
             const errors = formatError(error);
+            console.log('errors----', errors);
             return res.status(422).json({ message: "Invalid Data", errors });
         }
         return res.status(500).json({ message: "Something went wrong. Please try again." });

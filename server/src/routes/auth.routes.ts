@@ -13,6 +13,7 @@ const router = Router()
 router.post('/register', async (req: Request, res: Response) => {
     try {
         const body = req.body;
+
         const payload = registerSchema.parse(body);
 
         let user = await prisma.user.findUnique({
@@ -44,7 +45,6 @@ router.post('/register', async (req: Request, res: Response) => {
             body: emailBody
         })
 
-
         await prisma.user.create({
             data: {
                 name: payload.name,
@@ -58,6 +58,7 @@ router.post('/register', async (req: Request, res: Response) => {
     } catch (error) {
         if (error instanceof ZodError) {
             const errors = formatError(error)
+            console.log('errors----', errors)
             return res.status(422).json({ message: "Invalid Data", errors });
         }
 
@@ -66,3 +67,5 @@ router.post('/register', async (req: Request, res: Response) => {
 })
 
 export default router
+
+
