@@ -21,3 +21,10 @@ export const registerSchema = z
     path: ["confirmPassword"],
   });
 
+export const loginSchema = z.object({
+  email: z
+    .string({ message: 'Email field is required.' })
+    .email({ message: 'Email must be a correct email.' }),
+  password: z
+  .string({ message: 'Password field is required.' })
+})

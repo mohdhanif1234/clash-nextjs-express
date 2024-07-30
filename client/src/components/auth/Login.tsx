@@ -1,21 +1,23 @@
 'use client'
-import { registerAction } from "@/actions/authActions";
-import { SubmitButton } from "@/components/common/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { SubmitButton } from "../common/SubmitButton";
 import { useFormState } from 'react-dom'
+import { loginAction } from "@/actions/authActions";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react"
 
-const Register = () => {
+const Login = () => {
     const initialState = {
         status: 0,
         message: "",
-        errors: {
-        }
+        errors: {},
+        data: {}
     }
 
-    const [state, formAction] = useFormState(registerAction, initialState);
+    const [state, formAction] = useFormState(loginAction, initialState);
 
     useEffect(() => {
         if (state.status === 422) {
@@ -23,24 +25,18 @@ const Register = () => {
         }
         else if (state.status === 200) {
             toast.success(state.message)
+            signIn("credentials", {
+                email: state?.data?.email,
+                password: state?.data?.password,
+                redirect: true,
+                callbackUrl: "/dashboard"
+            })
         }
     }, [state])
 
     return (
         <>
             <form action={formAction}>
-                <div className="mt-4">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                        type="text"
-                        id="name"
-                        name="name"
-                        placeholder="Enter your name..."
-                    />
-
-                    <span className="text-red-500">{state?.errors.name}</span>
-                </div>
-
                 <div className="mt-4">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -60,26 +56,20 @@ const Register = () => {
                         name="password"
                         placeholder="Enter your password..."
                     />
-                    <span className="text-red-500">{state?.errors.password}</span>
-                </div>
+                    <span className="text-red-500">{state?.errors?.password}</span>
 
-                <div className="mt-4">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        placeholder="Confirm your password..."
-                    />
-                    <span className="text-red-500">{state?.errors.confirmPassword}</span>
+                    <div className="text-right font-bold">
+                        <Link href={"/forgot-password"}>Forgot Password?</Link>
+                    </div>
                 </div>
 
                 <div className="mt-4">
                     <SubmitButton />
                 </div>
+
             </form>
         </>
     )
 }
 
-export default Register
+export default Login

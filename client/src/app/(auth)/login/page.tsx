@@ -1,6 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import LoginForm from "@/components/auth/Login";
 import Link from "next/link";
 
 const Login = () => {
@@ -12,38 +10,7 @@ const Login = () => {
                 </h1>
                 <h1 className="text-3xl font-bold">Login</h1>
                 <p>Welcome Back</p>
-
-                <form>
-                    <div className="mt-4">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            type="email"
-                            id="email"
-                            name="email"
-                            placeholder="Enter your email..."
-                        ></Input>
-                    </div>
-
-                    <div className="mt-4">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            type="password"
-                            id="password"
-                            name="password"
-                            placeholder="Enter your password..."
-                        ></Input>
-
-                        <div className="text-right font-bold">
-                            <Link href={"/forgot-password"}>Forgot Password?</Link>
-                        </div>
-                    </div>
-
-                    <div className="mt-4">
-                        <Button className="w-full">Submit</Button>
-                    </div>
-
-                </form>
-
+                <LoginForm/>
                 <p className="text-center mt-2">Don't have an account? <strong><Link href={"/register"}>Register</Link></strong></p>
             </div>
         </div>
