@@ -6,10 +6,10 @@ export const registerAction = async (prevState: any, formData: FormData) => {
     // console.log('Form data---', formData)
     try {
         const { data } = await axios.post(REGISTER_URL, {
-            name: formData.get('name'),
-            email: formData.get('email'),
-            password: formData.get('password'),
-            confirmPassword: formData.get('confirmPassword'),
+            name: formData.get('name') === '' ? null : formData.get('name'),
+            email: formData.get('email') === '' ? null : formData.get('email'),
+            password: formData.get('password') === '' ? null : formData.get('password'),
+            confirmPassword: formData.get('confirmPassword') === '' ? null : formData.get('confirmPassword'),
         });
 
         return {

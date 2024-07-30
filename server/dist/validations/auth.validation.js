@@ -5,7 +5,8 @@ export const registerSchema = z
         .string({ message: "Name field is required." })
         .min(3, { message: "Name must be 3 characters long." }),
     email: z
-        .string({ message: "Email is required." })
+        .string({ message: "Email field is required." })
+        .min(3, { message: "Name must be 3 characters long." })
         .email({ message: "Please type correct email." }),
     password: z
         .string({ message: "Password field is required." })

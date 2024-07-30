@@ -18,6 +18,7 @@ const Register = () => {
     const [state, formAction] = useFormState(registerAction, initialState);
 
     useEffect(() => {
+        console.log(state)
         if (state.status === 422) {
             toast.error(state.message)
         }

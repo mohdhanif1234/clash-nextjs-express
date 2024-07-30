@@ -61,7 +61,6 @@ router.post('/register', async (req: Request, res: Response) => {
             console.log('errors----', errors)
             return res.status(422).json({ message: "Invalid Data", errors });
         }
-
         return res.status(500).json({ message: "Something went wrong. Please try again." });
     }
 })
