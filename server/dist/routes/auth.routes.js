@@ -1,16 +1,17 @@
 import { Router } from "express";
-import { loginSchema, registerSchema } from "../validations/auth.validation.js";
+import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from "../validations/auth.validation.js";
 import { ZodError } from "zod";
-import { formatError, renderEmailEjs } from "../helper.js";
+import { checkDateHourDiff, formatError, renderEmailEjs } from "../helper.js";
 import prisma from "../config/database.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid4 } from "uuid";
 import { emailQueue, emailQueueName } from "../jobs/EmailJob.js";
 import jwt from "jsonwebtoken";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { authLimiter } from "../config/rateLimit.js";
 const router = Router();
 // Register route
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
     try {
         const body = req.body;
         const payload = registerSchema.parse(body);
@@ -64,7 +65,7 @@ router.post("/register", async (req, res) => {
     }
 });
 // Login route
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
     try {
         const body = req.body;
         const payload = loginSchema.parse(body);
@@ -118,7 +119,7 @@ router.post("/login", async (req, res) => {
     }
 });
 // Login check route
-router.post("/check/credentials", async (req, res) => {
+router.post("/check/credentials", authLimiter, async (req, res) => {
     try {
         const body = req.body;
         const payload = loginSchema.parse(body);
@@ -159,11 +160,125 @@ router.post("/check/credentials", async (req, res) => {
             .json({ message: "Something went wrong. Please try again." });
     }
 });
-// Get User
+// Get User route
 router.get("/user", authMiddleware, async (req, res) => {
     const user = req.user;
     return res.json({
         data: user,
     });
+});
+// Forgot password route
+router.post("/forgot-password", authLimiter, async (req, res) => {
+    try {
+        const body = req.body;
+        const payload = forgotPasswordSchema.parse(body);
+        // Check user
+        let user = await prisma.user.findUnique({
+            where: {
+                email: payload.email
+            }
+        });
+        if (!user || user === null) {
+            return res.status(422).json({
+                message: "Invalid data",
+                errors: {
+                    email: "No user found with this email."
+                }
+            });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const token = await bcrypt.hash(uuid4(), salt);
+        await prisma.user.update({
+            data: {
+                password_reset_token: token,
+                token_send_at: new Date().toISOString()
+            },
+            where: {
+                email: payload.email
+            }
+        });
+        const url = `${process.env.CLIENT_APP_URL}/reset-password?email=${payload.email}&token=${token}`;
+        const html = await renderEmailEjs("forgot-password", { url });
+        await emailQueue.add(emailQueueName, {
+            to: payload.email,
+            subject: "Reset your password",
+            body: html
+        });
+        return res.json({ message: "Password reset link sent successfully. Please check your email." });
+    }
+    catch (error) {
+        if (error instanceof ZodError) {
+            const errors = formatError(error);
+            return res.status(422).json({ message: "Invalid Data", errors });
+        }
+        return res
+            .status(500)
+            .json({ message: "Something went wrong. Please try again." });
+    }
+});
+// Reset password route
+router.post("/reset-password", async (req, res) => {
+    try {
+        const body = req.body;
+        const payload = resetPasswordSchema.parse(body);
+        // Check user
+        let user = await prisma.user.findUnique({
+            where: {
+                email: payload.email
+            }
+        });
+        if (!user || user === null) {
+            return res.status(422).json({
+                message: "Invalid data",
+                errors: {
+                    email: "Link is not correct. Make sure you copied the correct link."
+                }
+            });
+        }
+        // Check token
+        if (user.password_reset_token !== payload.token) {
+            return res.status(422).json({
+                message: "Invalid data",
+                errors: {
+                    email: "Link is not correct. Make sure you copied the correct link."
+                }
+            });
+        }
+        // Check 2 hours time frame
+        const hoursDiff = checkDateHourDiff(user.token_send_at);
+        if (hoursDiff > 2) {
+            return res.status(422).json({
+                message: "Invalid data",
+                errors: {
+                    email: "Password reset token got expired. Please send a new token."
+                }
+            });
+        }
+        // Update password
+        const salt = await bcrypt.genSalt(10);
+        const newPass = await bcrypt.hash(payload.password, salt);
+        await prisma.user.update({
+            data: {
+                password: newPass,
+                password_reset_token: null,
+                token_send_at: null
+            },
+            where: {
+                email: payload.email
+            }
+        });
+        return res.json({
+            message: 'Password reset is successful. Please try to login now.'
+        });
+    }
+    catch (error) {
+        if (error instanceof ZodError) {
+            const errors = formatError(error);
+            return res.status(422).json({ message: "Invalid Data", errors });
+        }
+        return res
+            .status(500)
+            .json({ message: "Something went wrong. Please try again." });
+    }
 });
 export default router;

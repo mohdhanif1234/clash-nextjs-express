@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended: false
 }));
+app.use(appLimiter);
 // Set view engine
 app.set("view engine", "ejs");
 app.set("views", path.resolve(__dirname, "./views"));
@@ -28,6 +29,7 @@ app.get('/', async (req, res) => {
 // Queues
 import "./jobs/index.js";
 import { emailQueue, emailQueueName } from "./jobs/EmailJob.js";
+import { appLimiter } from "./config/rateLimit.js";
 app.listen(PORT, () => {
     console.log(`Server is running on PORT ${PORT}`);
 });
