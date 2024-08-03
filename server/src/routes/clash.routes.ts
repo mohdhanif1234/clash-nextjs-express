@@ -11,8 +11,10 @@ const router = Router();
 router.post('/', async (req: Request, res: Response) => {
     try {
         const body = req.body
-        console.log('body----', body)
-        console.log('req files', req.files)
+        body.title = body.title === '' ? null : body.title;
+        body.description = body.description === '' ? null : body.description
+        body.expires_at = body.expires_at === '' ? null : body.expires_at
+
         const payload = clashSchema.parse(body)
 
         // Check if files exist
@@ -57,6 +59,9 @@ router.get("/", async (req: Request, res: Response) => {
         const clash = await prisma.clash.findMany({
             where: {
                 user_id: req.user?.id!
+            },
+            orderBy: {
+                id: "desc"
             }
         })
 
